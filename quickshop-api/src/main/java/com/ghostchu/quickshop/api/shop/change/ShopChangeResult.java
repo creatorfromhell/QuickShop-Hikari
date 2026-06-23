@@ -1,4 +1,4 @@
-package com.ghostchu.quickshop.api.operation.result;
+package com.ghostchu.quickshop.api.shop.change;
 
 /*
  * QuickShop-Hikari
@@ -18,26 +18,41 @@ package com.ghostchu.quickshop.api.operation.result;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.ghostchu.quickshop.api.operation.OperationResult;
+import com.ghostchu.quickshop.api.shop.Shop;
+import net.kyori.adventure.text.Component;
 
-public class GenericOperationResult implements OperationResult<Boolean> {
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author creatorfromhell
+ * @since 6.3.0.0
+ */
+public class ShopChangeResult {
+
+  private final List<Shop> impactedShops = new ArrayList<>();
 
   private final boolean success;
+  private final Component errorMessage;
 
-  public GenericOperationResult(final boolean success) {
+  public ShopChangeResult(final boolean success, final Component errorMessage) {
 
     this.success = success;
+    this.errorMessage = errorMessage;
   }
 
-  @Override
+  public List<Shop> impactedShops() {
+
+    return impactedShops;
+  }
+
   public boolean success() {
 
-    return this.success;
+    return success;
   }
 
-  @Override
-  public Boolean result() {
+  public Component errorMessage() {
 
-    return this.success;
+    return errorMessage;
   }
 }
