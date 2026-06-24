@@ -19,6 +19,7 @@ package com.ghostchu.quickshop.api.shop.change;
  */
 
 import com.ghostchu.quickshop.api.shop.Shop;
+import org.bukkit.command.CommandSender;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,16 +31,17 @@ import java.util.concurrent.CompletableFuture;
 public interface ShopChange<T> {
 
   /**
-   * Performs an operation on the given list of shops and returns the result encapsulated
-   * within a {@link CompletableFuture}.
+   * Performs an operation on a given list of shops, executed by the specified performer,
+   * and returns the result encapsulated within a {@link CompletableFuture}.
    *
+   * @param performer the {@link CommandSender} who is performing the operation.
+   *                  Must not be null and should have the appropriate permissions.
    * @param shops a {@link List} of {@link Shop} instances on which the operation is to be performed.
-   *              The list must not be null, and all shops provided should be properly initialized
-   *              and valid for the operation.
+   *              The list must not be null and the shops should be valid for the operation.
    * @return a {@link CompletableFuture} that resolves to a {@link ShopChangeResult},
-   *         containing details of the shops impacted by the operation and whether it was successful.
+   *         containing the details of the shops impacted and the success status of the operation.
    */
-  CompletableFuture<ShopChangeResult> perform(final List<Shop> shops);
+  CompletableFuture<ShopChangeResult> perform(final CommandSender performer, final List<Shop> shops);
 
   /**
    * Sets the arguments for the shop change operation and returns a new instance of {@code ShopChange}

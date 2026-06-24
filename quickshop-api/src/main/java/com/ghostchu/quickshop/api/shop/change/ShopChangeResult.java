@@ -20,6 +20,7 @@ package com.ghostchu.quickshop.api.shop.change;
 
 import com.ghostchu.quickshop.api.shop.Shop;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +31,30 @@ import java.util.List;
  */
 public class ShopChangeResult {
 
-  private final List<Shop> impactedShops = new ArrayList<>();
+  private final List<Shop> failedShops = new ArrayList<>();
 
   private final boolean success;
-  private final Component errorMessage;
+  private final @Nullable Component errorMessage;
 
-  public ShopChangeResult(final boolean success, final Component errorMessage) {
+  public ShopChangeResult(final boolean success, final @Nullable Component errorMessage) {
 
     this.success = success;
     this.errorMessage = errorMessage;
   }
 
-  public List<Shop> impactedShops() {
+  public List<Shop> failedShops() {
 
-    return impactedShops;
+    return failedShops;
+  }
+
+  public ShopChangeResult addFailedShop(final Shop shop) {
+    failedShops.add(shop);
+    return this;
+  }
+
+  public ShopChangeResult addFailedShops(final List<Shop> shops) {
+    failedShops.addAll(shops);
+    return this;
   }
 
   public boolean success() {
@@ -51,8 +62,13 @@ public class ShopChangeResult {
     return success;
   }
 
-  public Component errorMessage() {
+  public @Nullable Component errorMessage() {
 
     return errorMessage;
+  }
+
+  public static ShopChangeResult error(final @Nullable Component errorMessage) {
+
+    return new ShopChangeResult(false, errorMessage);
   }
 }
