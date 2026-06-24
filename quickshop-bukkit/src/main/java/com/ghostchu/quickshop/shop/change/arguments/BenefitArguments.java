@@ -1,5 +1,6 @@
 package com.ghostchu.quickshop.shop.change.arguments;
 
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
 
 public class BenefitArguments {
@@ -8,7 +9,7 @@ public class BenefitArguments {
   private final boolean add;
   private final String percent;
 
-  public BenefitArguments(final String player, boolean add, final @Nullable String percent) {
+  public BenefitArguments(final @NotNull String player, boolean add, final @Nullable String percent) {
     this.player = player;
     this.add = add;
     this.percent = percent;
