@@ -25,6 +25,7 @@ import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -76,6 +77,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -920,6 +922,7 @@ public class Util {
     if(isEmptyComponent(result)) {
       try {
         result = plugin.platform().getTranslation(itemStack);
+        //result = Component.textOfChildren(GlobalTranslator.render(plugin.platform().getTranslation(itemStack), Locale.forLanguageTag(locale.replace('_', '-'))));
       } catch(final Throwable th) {
         result = MsgUtil.setHandleFailedHover(null, Component.text(itemStack.getType().getKey().toString()));
         plugin.logger().warn("Failed to handle translation for ItemStack {}", Util.serialize(itemStack), th);
