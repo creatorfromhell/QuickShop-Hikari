@@ -35,6 +35,10 @@ public class ShopQuery {
 
   private final List<Predicate<Shop>> filters = new ArrayList<>();
 
+  public static ShopQuery create() {
+    return new ShopQuery();
+  }
+
   /**
    * Adds a filter to the current query based on the specified criteria.
    *

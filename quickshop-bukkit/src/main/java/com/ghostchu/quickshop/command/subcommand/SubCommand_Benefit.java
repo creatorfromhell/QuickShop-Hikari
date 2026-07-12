@@ -53,6 +53,8 @@ public class SubCommand_Benefit implements CommandHandler<Player> {
       return;
     }
 
+    manager.createAction(ActionType.BENEFIT_ADD).withArguments(BenefitAddArgument.of(player, benefit)).perform(sender, shops);
+
     switch(parser.getArgs().getFirst()) {
       case "add" -> addBenefit(sender, shop, parser);
       case "remove" -> removeBenefit(sender, shop, parser);
