@@ -38,6 +38,8 @@ commonsCompress = "1.26.2"
 foliaLib = "0.5.1"
 libby = "2.0.2-SNAPSHOT"
 
+factionsUUID = "4.4.0"
+
 fawe = "2.12.0"
 worldEdit = "7.3.17"
 
@@ -92,6 +94,8 @@ folia-lib = { module = "com.tcoded:FoliaLib", version.ref = "foliaLib" }
 
 libby-core = { module = "com.ghostchu.lib.unofficial.com.alessiodp.libby:libby-core", version.ref = "libby" }
 libby-bukkit = { module = "com.ghostchu.lib.unofficial.com.alessiodp.libby:libby-bukkit", version.ref = "libby" }
+
+factions-uuid = { module = "dev.kitteh:factions", version.ref = "factionsUUID" }
 
 fawe-core = { module = "com.fastasyncworldedit:FastAsyncWorldEdit-Core", version.ref = "fawe" }
 worldedit-bukkit = { module = "com.sk89q.worldedit:worldedit-bukkit", version.ref = "worldEdit" }

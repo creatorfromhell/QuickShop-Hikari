@@ -66,6 +66,7 @@ dependencyResolutionManagement {
         maven("https://repo.william278.net/releases")
         maven("https://repo.xenondevs.xyz/releases")
         maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        maven("https://dependency.download/releases")
     }
 }
 
