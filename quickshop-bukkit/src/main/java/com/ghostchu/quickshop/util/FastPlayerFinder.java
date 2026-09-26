@@ -834,9 +834,16 @@ public class FastPlayerFinder implements PlayerFinder, SubPasteItem {
         return null;
       }
       try {
-        final String name = db.getPlayerName(uuid).get(30, TimeUnit.SECONDS);
+
+        final Optional<String> name = db.getPlayerName(uuid).get(30, TimeUnit.SECONDS);
+        if (name.isEmpty()) {
+
+          Log.debug("No name found during lookup.");
+          return null;
+        }
+
         Log.debug("Lookup result: " + name);
-        return name;
+        return name.get();
       } catch(final InterruptedException e) {
         Thread.currentThread().interrupt();
         return null;
@@ -870,9 +877,15 @@ public class FastPlayerFinder implements PlayerFinder, SubPasteItem {
         return null;
       }/**/
       try {
-        final UUID uuid = db.getPlayerUUID(name).get(30, TimeUnit.SECONDS);
+        final Optional<UUID> uuid = db.getPlayerUUID(name).get(30, TimeUnit.SECONDS);
+        if (uuid.isEmpty()) {
+
+          Log.debug("No uuid found during lookup.");
+          return null;
+        }
+
         Log.debug("Lookup result: " + uuid);
-        return uuid;
+        return uuid.get();
       } catch(final InterruptedException e) {
         Thread.currentThread().interrupt();
         return null;

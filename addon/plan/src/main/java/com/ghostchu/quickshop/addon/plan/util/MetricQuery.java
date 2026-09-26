@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -36,14 +37,14 @@ public class MetricQuery {
   public long queryServerPurchaseCount() {
 
     final String sql = "SELECT COUNT(*) AS result FROM " + databaseHelper.getPrefix() + "log_purchase";
-    try(SQLQuery query = databaseHelper.getManager().createQuery().withPreparedSQL(sql).setParams(Collections.emptyList()).execute()) {
+    try(final SQLQuery query = databaseHelper.getManager().createQuery().withPreparedSQL(sql).setParams(Collections.emptyList()).execute()) {
       final ResultSet set = query.getResultSet();
       if(set.next()) {
         return set.getInt("result");
       } else {
         return -1;
       }
-    } catch(SQLException e) {
+    } catch(final SQLException e) {
       return -1;
     }
   }
@@ -52,7 +53,7 @@ public class MetricQuery {
   public List<ShopTransactionRecord> queryTransactions(@NotNull final Date startTime, final long limit, final boolean descending) {
 
     final List<ShopTransactionRecord> list = new ArrayList<>();
-    try(SQLQuery query = databaseHelper.getManager().createQuery()
+    try(final SQLQuery query = databaseHelper.getManager().createQuery()
             .inTable(databaseHelper.getPrefix() + "log_transaction")
             .addTimeCondition("time", startTime, null)
             .selectColumns()
@@ -73,7 +74,7 @@ public class MetricQuery {
         );
         list.add(record);
       }
-    } catch(SQLException e) {
+    } catch(final SQLException e) {
       plugin.logger().warn("Querying transactions failed.", e);
       return list;
     }
@@ -107,13 +108,17 @@ public class MetricQuery {
     final LinkedHashMap<ShopMetricRecord, DataRecord> dataRecords = new LinkedHashMap<>();
     for(final ShopMetricRecord metricRecord : metricRecords) {
       final long shopId = metricRecord.getShopId();
-      final Long dataId = databaseHelper.locateShopDataId(shopId).get();
-      if(dataId == null) {
+      final Optional<Long> dataId = databaseHelper.locateShopDataId(shopId).get();
+      if(dataId.isEmpty()) {
         Log.debug("dataId is null for shopId " + shopId);
         continue;
       }
-      final DataRecord dataRecord = databaseHelper.getDataRecord(dataId).get();
-      dataRecords.put(metricRecord, dataRecord);
+      final Optional<DataRecord> dataRecord = databaseHelper.getDataRecord(dataId.get()).get();
+      if(dataRecord.isEmpty()) {
+        Log.debug("dataRecord is null for shopId " + shopId);
+        continue;
+      }
+      dataRecords.put(metricRecord, dataRecord.get());
     }
     return dataRecords;
 
@@ -123,7 +128,7 @@ public class MetricQuery {
   public List<ShopMetricRecord> queryServerPurchaseRecords(@NotNull final Date startTime, final long limit, final boolean descending) {
 
     final List<ShopMetricRecord> list = new ArrayList<>();
-    try(SQLQuery query = databaseHelper.getManager().createQuery()
+    try(final SQLQuery query = databaseHelper.getManager().createQuery()
             .inTable(databaseHelper.getPrefix() + "log_purchase")
             .addTimeCondition("time", startTime, null)
             .selectColumns()
@@ -143,7 +148,7 @@ public class MetricQuery {
                 .build();
         list.add(record);
       }
-    } catch(SQLException e) {
+    } catch(final SQLException e) {
       e.printStackTrace();
       return list;
     }

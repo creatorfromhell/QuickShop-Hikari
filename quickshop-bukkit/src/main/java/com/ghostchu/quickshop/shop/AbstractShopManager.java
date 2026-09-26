@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -203,13 +204,13 @@ public abstract class AbstractShopManager implements ShopManager {
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> clearShopTags(@NotNull final UUID tagger, @NotNull final Shop shop) {
+  public CompletableFuture<Optional<Integer>> clearShopTags(@NotNull final UUID tagger, @NotNull final Shop shop) {
 
     return plugin.getDatabaseHelper().removeAllShopTagsBy(tagger, shop.getShopId());
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> clearTagFromShops(@NotNull final UUID tagger, @NotNull String tag) {
+  public CompletableFuture<Optional<Integer>> clearTagFromShops(@NotNull final UUID tagger, @NotNull String tag) {
 
     tag = tag.trim().toLowerCase(Locale.ROOT);
     tag = tag.replace(" ", "_");
@@ -217,7 +218,7 @@ public abstract class AbstractShopManager implements ShopManager {
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> removeTag(@NotNull final UUID tagger, @NotNull final Shop shop, @NotNull String tag) {
+  public CompletableFuture<Optional<Integer>> removeTag(@NotNull final UUID tagger, @NotNull final Shop shop, @NotNull String tag) {
 
     tag = tag.trim().toLowerCase(Locale.ROOT);
     tag = tag.replace(" ", "_");
@@ -225,7 +226,7 @@ public abstract class AbstractShopManager implements ShopManager {
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> tagShop(@NotNull final UUID tagger, @NotNull final Shop shop, @NotNull String tag) {
+  public CompletableFuture<Optional<Integer>> tagShop(@NotNull final UUID tagger, @NotNull final Shop shop, @NotNull String tag) {
 
     tag = tag.trim().toLowerCase(Locale.ROOT);
     tag = tag.replace(" ", "_");

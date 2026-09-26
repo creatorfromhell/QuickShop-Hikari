@@ -402,9 +402,8 @@ public class MainPage extends QuickShopPage {
                                                final List<CompletableFuture<Void>> futures = new ArrayList<>();
                                                for(final ShopHistory.ShopHistoryRecord record : queryResult) {
                                                  futures.add(QuickShop.getInstance().getDatabaseHelper().getDataRecord(record.dataId()).thenAccept(data->{
-                                                   if(data != null) {
-                                                     dataRecords.put(record.dataId(), data);
-                                                   }
+
+                                                   data.ifPresent(dataRecord->dataRecords.put(record.dataId(), dataRecord));
                                                  }));
                                                }
                                                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();

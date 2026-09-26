@@ -180,28 +180,29 @@ public class QuickShopTagService implements TagService {
   public CompletableFuture<Boolean> addShopTag(final UUID player, final long shopId, final String tag) {
 
     final DatabaseHelper db = plugin.getDatabaseHelper();
-    return db.tagShop(player, shopId, tag).thenApply(result->result != null && result > 0);
+
+    return db.tagShop(player, shopId, tag).thenApply(result->result.isPresent() && result.get() > 0);
   }
 
   @Override
   public CompletableFuture<Boolean> removeShopTag(final UUID player, final long shopId, final String tag) {
 
     final DatabaseHelper db = plugin.getDatabaseHelper();
-    return db.removeShopTag(player, shopId, tag).thenApply(result->result != null && result > 0);
+    return db.removeShopTag(player, shopId, tag).thenApply(result->result.isPresent() && result.get() > 0);
   }
 
   @Override
   public CompletableFuture<Boolean> removeAllShopTags(final long shopId) {
 
     final DatabaseHelper db = plugin.getDatabaseHelper();
-    return db.removeAllShopTags(shopId).thenApply(result->result != null && result > 0);
+    return db.removeAllShopTags(shopId).thenApply(result->result.isPresent() && result.get() > 0);
   }
 
   @Override
   public CompletableFuture<Boolean> removeAllShopTagsBy(final long shopId, final UUID player) {
 
     final DatabaseHelper db = plugin.getDatabaseHelper();
-    return db.removeAllShopTagsBy(player, shopId).thenApply(result->result != null && result > 0);
+    return db.removeAllShopTagsBy(player, shopId).thenApply(result->result.isPresent() && result.get() > 0);
   }
 
   @Override
@@ -210,7 +211,7 @@ public class QuickShopTagService implements TagService {
     final DatabaseHelper db = plugin.getDatabaseHelper();
 
     return db.tagShop(player, shopId, tag).thenCompose(result->{
-      if(result != null && result > 0) {
+      if(result.isPresent() && result.get() > 0) {
         return CompletableFuture.completedFuture(true);
       }
 

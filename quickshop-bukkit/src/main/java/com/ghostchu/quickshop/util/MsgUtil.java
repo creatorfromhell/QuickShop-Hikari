@@ -447,8 +447,9 @@ public class MsgUtil {
       try {
         if(p.getName() != null && PLUGIN.getConfig().getBoolean("bungee-cross-server-msg", true)) {
           PLUGIN.getDatabaseHelper().getPlayerLocale(uuid).whenCompleteAsync((locale, err)->{
-            if(locale != null) {
-              sendBungeeMessage(p.getName(), shopTransactionMessage, locale);
+
+            if (locale.isEmpty()) {
+              sendBungeeMessage(p.getName(), shopTransactionMessage, locale.get());
             }
           });
         }

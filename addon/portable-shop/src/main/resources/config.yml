@@ -1,0 +1,5 @@
+# Should it require silk touch?
+silk-touch: true
+
+# Should we force the owner to be the player that places it?
+force-owner: true

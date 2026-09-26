@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -392,7 +393,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@Nullable DataRecord> getDataRecord(final long dataId) {
+  public @NotNull CompletableFuture<Optional<DataRecord>> getDataRecord(final long dataId) {
 
     return DataTables.DATA.createQuery()
             .addCondition("id", dataId)
@@ -401,15 +402,15 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .executeFuture(query->{
               final ResultSet result = query.getResultSet();
               if(result.next()) {
-                return new SimpleDataRecord(plugin.getPlayerFinder(), result);
+                return Optional.of(new SimpleDataRecord(plugin.getPlayerFinder(), result));
               }
-              return null;
+              return Optional.empty();
             });
   }
 
   @Override
   @NotNull
-  public CompletableFuture<@Nullable String> getPlayerLocale(@NotNull final UUID uuid) {
+  public CompletableFuture<Optional<String>> getPlayerLocale(@NotNull final UUID uuid) {
 
     return DataTables.PLAYERS.createQuery()
             .addCondition("uuid", uuid.toString())
@@ -419,15 +420,15 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .executeFuture(sqlQuery->{
                              final ResultSet set = sqlQuery.getResultSet();
                              if(set.next()) {
-                               return set.getString("locale");
+                               return Optional.ofNullable(set.getString("locale"));
                              }
-                             return null;
+                             return Optional.empty();
                            }
                           );
   }
 
   @Override
-  public CompletableFuture<@Nullable String> getPlayerLocale(@NotNull final QUser qUser) {
+  public CompletableFuture<Optional<String>> getPlayerLocale(@NotNull final QUser qUser) {
 
     final UUID uuid = qUser.getUniqueIdIfRealPlayer().orElse(null);
     if(uuid == null) {
@@ -437,7 +438,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public CompletableFuture<@Nullable String> getPlayerName(@NotNull final UUID uuid) {
+  public CompletableFuture<Optional<String>> getPlayerName(@NotNull final UUID uuid) {
 
     return DataTables.PLAYERS.createQuery()
             .addCondition("uuid", uuid.toString())
@@ -447,15 +448,15 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .executeFuture(sqlQuery->{
                              final ResultSet set = sqlQuery.getResultSet();
                              if(set.next()) {
-                               return set.getString("cachedName");
+                               return Optional.ofNullable(set.getString("cachedName"));
                              }
-                             return null;
+                             return Optional.empty();
                            }
                           );
   }
 
   @Override
-  public CompletableFuture<@Nullable UUID> getPlayerUUID(@NotNull final String name) {
+  public CompletableFuture<Optional<UUID>> getPlayerUUID(@NotNull final String name) {
 
     return DataTables.PLAYERS.createQuery()
             .addCondition("cachedName", name)
@@ -465,9 +466,9 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .executeFuture(sqlQuery->{
                              final ResultSet set = sqlQuery.getResultSet();
                              if(set.next()) {
-                               return UUID.fromString(set.getString("uuid"));
+                               return Optional.of(UUID.fromString(set.getString("uuid")));
                              }
-                             return null;
+                             return Optional.empty();
                            }
                           );
   }
@@ -657,59 +658,59 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@Nullable Integer> tagShop(@NotNull final UUID tagger, @NotNull final Long shopId, @NotNull final String tag) {
+  public @NotNull CompletableFuture<Optional<Integer>> tagShop(@NotNull final UUID tagger, @NotNull final Long shopId, @NotNull final String tag) {
 
     return DataTables.TAGS.createInsert()
             .setColumnNames("tagger", "shop", "tag")
             .setParams(tagger.toString(), shopId, tag)
-            .executeFuture(i->i);
+            .executeFuture(Optional::ofNullable);
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> removeAllShopTags(@NotNull final Long shopId) {
+  public CompletableFuture<Optional<Integer>> removeAllShopTags(@NotNull final Long shopId) {
 
     return DataTables.TAGS.createDelete()
             .addCondition("shop", shopId)
-            .build().executeFuture(i->i);
+            .build().executeFuture(Optional::ofNullable);
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> removeAllTagsBy(@NotNull final UUID tagger) {
+  public CompletableFuture<Optional<Integer>> removeAllTagsBy(@NotNull final UUID tagger) {
 
     return DataTables.TAGS.createDelete()
             .addCondition("tagger", tagger.toString())
-            .build().executeFuture(i->i);
+            .build().executeFuture(Optional::ofNullable);
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> removeShopTag(@NotNull final UUID tagger, @NotNull final Long shopId, @NotNull final String tag) {
-
-    return DataTables.TAGS.createDelete()
-            .addCondition("tagger", tagger.toString())
-            .addCondition("shop", shopId)
-            .addCondition("tag", tag).build().executeFuture(i->i);
-  }
-
-  @Override
-  public CompletableFuture<@Nullable Integer> removeAllShopTagsBy(@NotNull final UUID tagger, @NotNull final Long shopId) {
+  public CompletableFuture<Optional<Integer>> removeShopTag(@NotNull final UUID tagger, @NotNull final Long shopId, @NotNull final String tag) {
 
     return DataTables.TAGS.createDelete()
             .addCondition("tagger", tagger.toString())
             .addCondition("shop", shopId)
-            .build().executeFuture(i->i);
+            .addCondition("tag", tag).build().executeFuture(Optional::ofNullable);
   }
 
   @Override
-  public CompletableFuture<@Nullable Integer> removeTagFromShops(@NotNull final UUID tagger, @NotNull final String tag) {
+  public CompletableFuture<Optional<Integer>> removeAllShopTagsBy(@NotNull final UUID tagger, @NotNull final Long shopId) {
+
+    return DataTables.TAGS.createDelete()
+            .addCondition("tagger", tagger.toString())
+            .addCondition("shop", shopId)
+            .build().executeFuture(Optional::ofNullable);
+  }
+
+  @Override
+  public CompletableFuture<Optional<Integer>> removeTagFromShops(@NotNull final UUID tagger, @NotNull final String tag) {
 
     return DataTables.TAGS.createDelete()
             .addCondition("tagger", tagger.toString())
             .addCondition("tag", tag)
-            .build().executeFuture(i->i);
+            .build().executeFuture(Optional::ofNullable);
   }
 
   @Override
-  public @NotNull CompletableFuture<@Nullable Long> locateShopDataId(final long shopId) {
+  public @NotNull CompletableFuture<Optional<Long>> locateShopDataId(final long shopId) {
 
     return DataTables.SHOPS.createQuery()
             .addCondition("id", shopId)
@@ -718,15 +719,15 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .executeFuture(query->{
               final ResultSet result = query.getResultSet();
               if(result.next()) {
-                return result.getLong("data");
+                return Optional.of(result.getLong("data"));
               }
-              return null;
+              return Optional.empty();
             });
   }
 
   @Override
   @NotNull
-  public CompletableFuture<@Nullable Long> locateShopId(@NotNull final String world, final int x, final int y, final int z) {
+  public CompletableFuture<Optional<Long>> locateShopId(@NotNull final String world, final int x, final int y, final int z) {
 
     return DataTables.SHOP_MAP.createQuery()
             .addCondition("world", world)
@@ -737,15 +738,15 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
             .build().executeFuture(query->{
               final ResultSet result = query.getResultSet();
               if(result.next()) {
-                return result.getLong("shop");
+                return Optional.of(result.getLong("shop"));
               } else {
-                return null;
+                return Optional.empty();
               }
             });
   }
 
   @Override
-  public @NotNull CompletableFuture<@NotNull Integer> removeData(final long dataId) {
+  public @NotNull CompletableFuture<Integer> removeData(final long dataId) {
 
     if(dataId <= 0) {
 
@@ -758,7 +759,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@NotNull Integer> removeShop(final long shopId) {
+  public @NotNull CompletableFuture<Integer> removeShop(final long shopId) {
 
 
     if(shopId <= 0) {
@@ -772,7 +773,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@NotNull Integer> removeShopMap(@NotNull final String world, final int x, final int y, final int z) {
+  public @NotNull CompletableFuture<Integer> removeShopMap(@NotNull final String world, final int x, final int y, final int z) {
     // TODO: Execute isolated data check in async thread
     return DataTables.SHOP_MAP.createDelete()
             .addCondition("world", world)
@@ -784,7 +785,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@NotNull Integer> saveOfflineTransactionMessage(@NotNull final UUID player, @NotNull final String message, final long time) {
+  public @NotNull CompletableFuture<Integer> saveOfflineTransactionMessage(@NotNull final UUID player, @NotNull final String message, final long time) {
 
     return DataTables.MESSAGES.createInsert()
             .setColumnNames("receiver", "time", "content")
@@ -827,7 +828,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
 
   @Override
   @NotNull
-  public CompletableFuture<@NotNull Integer> updatePlayerProfile(@NotNull final UUID uuid, @Nullable final String locale, @NotNull final String username) {
+  public CompletableFuture<Integer> updatePlayerProfile(@NotNull final UUID uuid, @Nullable final String locale, @NotNull final String username) {
 
     if(locale != null) {
       return DataTables.PLAYERS.createReplace()
@@ -837,13 +838,13 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
     }
 
     return CompletableFuture.supplyAsync(()->{
-      String cachedLocale = getPlayerLocale(uuid).join();
-      if(cachedLocale == null) {
-        cachedLocale = "en_us";
+      Optional<String> cachedLocale = getPlayerLocale(uuid).join();
+      if(cachedLocale.isEmpty()) {
+        cachedLocale = Optional.of("en_us");
       }
       return DataTables.PLAYERS.createReplace()
               .setColumnNames("uuid", "locale", "cachedName")
-              .setParams(uuid.toString(), cachedLocale, username)
+              .setParams(uuid.toString(), cachedLocale.get(), username)
               .executeFuture(lines->lines).join();
     });
   }
@@ -877,7 +878,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public @NotNull CompletableFuture<@NotNull Integer> updateExternalInventoryProfileCache(final long shopId, final int space, final int stock) {
+  public @NotNull CompletableFuture<Integer> updateExternalInventoryProfileCache(final long shopId, final int space, final int stock) {
 
 
     if(shopId <= 0) {
@@ -920,7 +921,7 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
   }
 
   @Override
-  public CompletableFuture<@NotNull ShopInventoryCountCache> queryInventoryCache(final long shopId) {
+  public CompletableFuture<ShopInventoryCountCache> queryInventoryCache(final long shopId) {
 
     return CompletableFuture.supplyAsync(()->{
       try(final SQLQuery query = DataTables.EXTERNAL_CACHE.createQuery()

@@ -60,6 +60,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -250,7 +251,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
   private FileConfiguration loadBuiltInFallback() {
 
     final YamlConfiguration configuration = new YamlConfiguration();
-    try(InputStream inputStream = QuickShop.getInstance().getJavaPlugin().getResource("lang/messages.yml")) {
+    try(final InputStream inputStream = QuickShop.getInstance().getJavaPlugin().getResource("lang/messages.yml")) {
       if(inputStream == null) {
         plugin.logger().warn("Failed to load built-in fallback translation, fallback file not exists in jar.");
         return configuration;
@@ -280,7 +281,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
       plugin.logger().warn("Failed to load bundled translation", e);
       return new HashMap<>();
     }
-    try(ZipFile zipFile = new ZipFile(jarFile, "UTF-8")) {
+    try(final ZipFile zipFile = new ZipFile(jarFile, "UTF-8")) {
       // jar/lang/<region_code>/
       final Map<String, FileConfiguration> availableLang = new HashMap<>();
       zipFile.getEntries().asIterator().forEachRemaining(entry->{
@@ -505,7 +506,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
   @NotNull
   public ProxiedLocale findRelativeLanguages(@Nullable final CommandSender sender) {
 
-    if(sender instanceof Player player) {
+    if(sender instanceof final Player player) {
       return findRelativeLanguages(player.getLocale());
     }
     return findRelativeLanguages(MsgUtil.getDefaultGameLanguageCode());
@@ -549,7 +550,10 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
       return findRelativeLanguages(MsgUtil.getDefaultGameLanguageCode());
     }
     try {
-      return findRelativeLanguages(plugin.getDatabaseHelper().getPlayerLocale(sender).get());
+
+      final Optional<String> locale = plugin.getDatabaseHelper().getPlayerLocale(sender).get();
+      return locale.map(this::findRelativeLanguages).orElseGet(()->findRelativeLanguages(MsgUtil.getDefaultGameLanguageCode()));
+
     } catch(final InterruptedException | ExecutionException e) {
       Log.debug("Failed to get player locale from database, fallback to default locale: " + e.getMessage());
       return findRelativeLanguages(MsgUtil.getDefaultGameLanguageCode());
@@ -635,15 +639,15 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
         continue;
       }
       final Class<?> clazz = obj.getClass();
-      if(obj instanceof Component component) {
+      if(obj instanceof final Component component) {
         components[i] = component;
         continue;
       }
-      if(obj instanceof ComponentLike componentLike) {
+      if(obj instanceof final ComponentLike componentLike) {
         components[i] = componentLike.asComponent();
         continue;
       }
-      if(obj instanceof QUser qUser) {
+      if(obj instanceof final QUser qUser) {
         components[i] = LegacyComponentSerializer.legacySection().deserialize(qUser.getDisplay());
       }
       // Check
@@ -866,7 +870,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
     @NotNull
     public List<Component> forLocale() {
 
-      if(sender instanceof Player player) {
+      if(sender instanceof final Player player) {
         return forLocale(player.getLocale());
       } else {
         return forLocale(MsgUtil.getDefaultGameLanguageCode());
@@ -882,7 +886,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
     public boolean isPresent() {
 
       final String locale;
-      if(sender instanceof Player player) {
+      if(sender instanceof final Player player) {
         locale = player.getLocale();
       } else {
         locale = MsgUtil.getDefaultGameLanguageCode();
@@ -1028,7 +1032,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
     @NotNull
     public Component forLocale() {
 
-      if(sender instanceof Player player) {
+      if(sender instanceof final Player player) {
         return forLocale(player.getLocale());
       } else {
         return forLocale(MsgUtil.getDefaultGameLanguageCode());
@@ -1072,7 +1076,7 @@ public class SimpleTextManager implements TextManager, Reloadable, SubPasteItem 
     public boolean isPresent() {
 
       final String locale;
-      if(sender instanceof Player player) {
+      if(sender instanceof final Player player) {
         locale = player.getLocale();
       } else {
         locale = MsgUtil.getDefaultGameLanguageCode();

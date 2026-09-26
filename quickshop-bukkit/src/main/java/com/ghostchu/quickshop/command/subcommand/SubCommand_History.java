@@ -133,10 +133,8 @@ public class SubCommand_History implements CommandHandler<Player> {
                           .getDatabaseHelper()
                           .getDataRecord(id)
                           .thenAccept(data->{
-                            if(data != null) {
 
-                              dataRecords.put(id, data);
-                            }
+                            data.ifPresent(dataRecord->dataRecords.put(id, dataRecord));
                           })
                           .exceptionally(ex->{
 

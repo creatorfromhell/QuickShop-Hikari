@@ -606,13 +606,13 @@ public interface ShopManager {
   @NotNull
   CompletableFuture<List<Shop>> queryTaggedShops(@NotNull UUID tagger, @NotNull String tag);
 
-  CompletableFuture<Integer> clearShopTags(@NotNull UUID tagger, @NotNull Shop shop);
+  CompletableFuture<Optional<Integer>> clearShopTags(@NotNull UUID tagger, @NotNull Shop shop);
 
-  CompletableFuture<Integer> clearTagFromShops(@NotNull UUID tagger, @NotNull String tag);
+  CompletableFuture<Optional<Integer>> clearTagFromShops(@NotNull UUID tagger, @NotNull String tag);
 
-  CompletableFuture<Integer> removeTag(@NotNull UUID tagger, @NotNull Shop shop, @NotNull String tag);
+  CompletableFuture<Optional<Integer>> removeTag(@NotNull UUID tagger, @NotNull Shop shop, @NotNull String tag);
 
-  CompletableFuture<Integer> tagShop(@NotNull UUID tagger, @NotNull Shop shop, @NotNull String tag);
+  CompletableFuture<Optional<Integer>> tagShop(@NotNull UUID tagger, @NotNull Shop shop, @NotNull String tag);
 
   @NotNull
   List<String> listTags(@NotNull UUID tagger);
