@@ -1,6 +1,8 @@
 package com.ghostchu.quickshop.listener;
 
 import com.ghostchu.quickshop.QuickShop;
+import com.ghostchu.quickshop.api.event.Phase;
+import com.ghostchu.quickshop.api.event.management.ShopDeleteBlockEvent;
 import com.ghostchu.quickshop.api.shop.Info;
 import com.ghostchu.quickshop.api.shop.Shop;
 import com.ghostchu.quickshop.api.shop.ShopAction;
@@ -30,6 +32,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerSignOpenEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,27 +94,42 @@ public class BlockListener extends AbstractProtectionListener {
   public void onBreak(final BlockBreakEvent e) {
 
     final Block b = e.getBlock();
+    final BlockState state = b.getState(false);
     final Player p = e.getPlayer();
+
     // If the shop was a chest
-    if(Util.canBeShop(b)) {
+    if(Util.canBeShop(b, state)) {
+
       final Shop shop = getShopPlayer(b.getLocation(), true);
       if(shop == null) {
         return;
       }
-      // If they're either survival or the owner, they can break it
-      if(p.getGameMode() == GameMode.CREATIVE && (shop.playerAuthorize(p.getUniqueId(), BuiltInShopPermission.DELETE) || plugin.perm().hasPermission(p, "quickshop.other.destroy"))) {
-        // Check SuperTool
-        if(p.getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE) {
-          if(getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
-            e.setCancelled(true);
-            plugin.text().of(p, "supertool-is-disabled").send();
-            return;
-          }
+
+      final boolean canDelete = shop.playerAuthorize(p.getUniqueId(), BuiltInShopPermission.DELETE) || plugin.perm().hasPermission(p, "quickshop.other.destroy");
+      if (!canDelete) {
+        e.setCancelled(true);
+        plugin.text().of(p, "no-permission").send();
+        return;
+      }
+
+      final ItemStack itemInHand = p.getInventory().getItemInMainHand();
+
+      if (p.getGameMode() == GameMode.CREATIVE) {
+
+        if (getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
+          e.setCancelled(true);
+          plugin.text().of(p, "supertool-is-disabled").send();
+          return;
+        }
+
+        if (itemInHand.getType() == Material.GOLDEN_AXE) {
+
           plugin.text().of(p, "break-shop-use-supertool").send();
-          plugin.logEvent(new ShopRemoveLog(QUserImpl.createFullFilled(p), "BlockBreak(player)", shop.saveToInfoStorage())); 
+          plugin.logEvent(new ShopRemoveLog(QUserImpl.createFullFilled(p), "BlockBreak(player)", shop.saveToInfoStorage()));
           plugin.getShopManager().deleteShop(shop);
           return;
         }
+
         e.setCancelled(true);
         final Component component = Util.getItemStackName(new ItemStack(Material.GOLDEN_AXE, 1));
         plugin.text().of(p, "no-creative-break", component).send();
@@ -120,39 +138,66 @@ public class BlockListener extends AbstractProtectionListener {
 
       // Cancel their current menu... Doesnt cancel other's menu's.
       final Info action = super.getPlugin().getShopManager().getInteractiveManager().get(p.getUniqueId());
+      if (action != null) {
 
-      if(action != null) {
         action.setAction(ShopAction.CANCELLED);
       }
+
+      ShopDeleteBlockEvent shopDeleteBlockEvent = new ShopDeleteBlockEvent(shop, itemInHand, (InventoryHolder)state);
+      shopDeleteBlockEvent.callCancellableEvent();
+
+      if (shopDeleteBlockEvent.isCancelled()) {
+        e.setCancelled(true);
+        return;
+      }
+
       plugin.logEvent(new ShopRemoveLog(QUserImpl.createFullFilled(p), "BlockBreak(player)", shop.saveToInfoStorage()));
       plugin.getShopManager().deleteShop(shop);
       plugin.text().of(p, "success-removed-shop").send();
+
+      shopDeleteBlockEvent = shopDeleteBlockEvent.clone(Phase.POST);
+      shopDeleteBlockEvent.callEvent();
     } else if(Util.isWallSign(b.getType())) {
+
       final Shop shop = getShopNextTo(b.getLocation());
       if(shop == null) {
         return;
       }
-      // If they're in creative and not the owner, don't let them
-      // (accidents happen)
-      if(p.getGameMode() == GameMode.CREATIVE && (shop.playerAuthorize(p.getUniqueId(), BuiltInShopPermission.DELETE) || plugin.perm().hasPermission(p, "quickshop.other.destroy"))) {
+
+      final boolean canDelete = shop.playerAuthorize(p.getUniqueId(), BuiltInShopPermission.DELETE) || plugin.perm().hasPermission(p, "quickshop.other.destroy");
+      if (!canDelete) {
+        e.setCancelled(true);
+        plugin.text().of(p, "no-permission").send();
+        return;
+      }
+
+      // Require the SuperTool when breaking shops in Creative mode
+      // to prevent accidental shop deletion.
+      if (p.getGameMode() == GameMode.CREATIVE) {
+
+        if (getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
+
+          e.setCancelled(true);
+          plugin.text().of(p, "supertool-is-disabled").send();
+          return;
+        }
+
         // Check SuperTool
-        if(p.getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE) {
-          if(getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
-            e.setCancelled(true);
-            plugin.text().of(p, "supertool-is-disabled").send();
-            return;
-          }
+        if (p.getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE) {
+
           plugin.text().of(p, "break-shop-use-supertool").send();
           plugin.logEvent(new ShopRemoveLog(QUserImpl.createFullFilled(p), "BlockBreak(player)", shop.saveToInfoStorage()));
           plugin.getShopManager().deleteShop(shop);
           return;
         }
+
         e.setCancelled(true);
         final Component component = Util.getItemStackName(new ItemStack(Material.GOLDEN_AXE, 1));
         plugin.text().of(p, "no-creative-break", component).send();
         return;
       }
-      //Allow Shop owner break the shop sign(for sign replacement)
+
+      //Allow a Shop owner to break the shop sign (for sign replacement)
       if(getPlugin().getConfig().getBoolean("shop.allow-owner-break-shop-sign") && p.getUniqueId().equals(shop.getOwner().getUniqueId())) {
         return;
       }

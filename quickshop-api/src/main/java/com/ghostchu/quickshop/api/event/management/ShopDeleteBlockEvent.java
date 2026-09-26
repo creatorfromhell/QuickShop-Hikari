@@ -20,7 +20,7 @@ package com.ghostchu.quickshop.api.event.management;
 
 import com.ghostchu.quickshop.api.event.Phase;
 import com.ghostchu.quickshop.api.shop.Shop;
-import org.bukkit.block.Container;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,22 +33,22 @@ import org.jetbrains.annotations.NotNull;
 public class ShopDeleteBlockEvent extends ShopEvent {
 
   protected final ItemStack itemStack;
-  protected final Container container;
+  protected final InventoryHolder holder;
 
-  public ShopDeleteBlockEvent(final @NotNull Shop shop, final ItemStack itemStack, final Container container) {
+  public ShopDeleteBlockEvent(final @NotNull Shop shop, final ItemStack itemStack, final InventoryHolder holder) {
 
     super(shop);
 
     this.itemStack = itemStack;
-    this.container = container;
+    this.holder = holder;
   }
 
-  public ShopDeleteBlockEvent(final Phase phase, final @NotNull Shop shop, final ItemStack itemStack, final Container container) {
+  public ShopDeleteBlockEvent(final Phase phase, final @NotNull Shop shop, final ItemStack itemStack, final InventoryHolder holder) {
 
     super(phase, shop);
 
     this.itemStack = itemStack;
-    this.container = container;
+    this.holder = holder;
   }
 
   /**
@@ -61,7 +61,7 @@ public class ShopDeleteBlockEvent extends ShopEvent {
   @Override
   public ShopDeleteBlockEvent clone(final Phase newPhase) {
 
-    return new ShopDeleteBlockEvent(newPhase, this.shop, this.itemStack, this.container);
+    return new ShopDeleteBlockEvent(newPhase, this.shop, this.itemStack, this.holder);
   }
 
   public ItemStack itemStack() {
@@ -69,8 +69,8 @@ public class ShopDeleteBlockEvent extends ShopEvent {
     return itemStack;
   }
 
-  public Container container() {
+  public InventoryHolder holder() {
 
-    return container;
+    return holder;
   }
 }
