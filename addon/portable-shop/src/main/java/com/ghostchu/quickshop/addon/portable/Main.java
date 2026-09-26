@@ -1,8 +1,10 @@
 package com.ghostchu.quickshop.addon.portable;
 
-import com.ghostchu.quickshop.api.event.management.ShopDeleteEvent;
+import com.ghostchu.quickshop.api.event.management.ShopDeleteBlockEvent;
 import com.ghostchu.quickshop.compatibility.CompatibilityModule;
 import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.event.EventHandler;
 
 public final class Main extends CompatibilityModule {
 
@@ -18,7 +20,12 @@ public final class Main extends CompatibilityModule {
     forceOwner = getConfig().getBoolean("force-owner");
   }
 
-  public void onDelete(final ShopDeleteEvent event) {
 
+  @EventHandler(ignoreCancelled = true)
+  public void onDelete(final ShopDeleteBlockEvent event) {
+
+    if (requireSilkTouch && !event.itemStack().containsEnchantment(Enchantment.SILK_TOUCH)) {
+      return;
+    }
   }
 }

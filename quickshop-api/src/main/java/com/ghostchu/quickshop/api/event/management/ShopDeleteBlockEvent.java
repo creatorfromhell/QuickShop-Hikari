@@ -20,35 +20,41 @@ package com.ghostchu.quickshop.api.event.management;
 
 import com.ghostchu.quickshop.api.event.Phase;
 import com.ghostchu.quickshop.api.shop.Shop;
+import org.bukkit.block.BlockState;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * ShopDeleteEvent is a class representing an event that occurs when a shop's block is deleted.
+ * ShopDeleteEvent is a class representing an event that occurs when a shop's block is deleted. This is called
+ * after permission checks are performed.
  *
  * @author creatorfromhell
  * @since 6.3.0.4
  */
 public class ShopDeleteBlockEvent extends ShopEvent {
 
+  protected final Player player;
   protected final ItemStack itemStack;
-  protected final InventoryHolder holder;
+  protected final BlockState blockState;
 
-  public ShopDeleteBlockEvent(final @NotNull Shop shop, final ItemStack itemStack, final InventoryHolder holder) {
+  public ShopDeleteBlockEvent(final @NotNull Shop shop, final @NotNull Player player, final ItemStack itemStack, final BlockState blockState) {
 
     super(shop);
 
+    this.player = player;
     this.itemStack = itemStack;
-    this.holder = holder;
+    this.blockState = blockState;
   }
 
-  public ShopDeleteBlockEvent(final Phase phase, final @NotNull Shop shop, final ItemStack itemStack, final InventoryHolder holder) {
+  public ShopDeleteBlockEvent(final Phase phase, final @NotNull Shop shop, final @NotNull Player player, final ItemStack itemStack, final BlockState blockState) {
 
     super(phase, shop);
 
+    this.player = player;
     this.itemStack = itemStack;
-    this.holder = holder;
+    this.blockState = blockState;
   }
 
   /**
@@ -61,7 +67,12 @@ public class ShopDeleteBlockEvent extends ShopEvent {
   @Override
   public ShopDeleteBlockEvent clone(final Phase newPhase) {
 
-    return new ShopDeleteBlockEvent(newPhase, this.shop, this.itemStack, this.holder);
+    return new ShopDeleteBlockEvent(newPhase, this.shop, this.player, this.itemStack, this.blockState);
+  }
+
+  public Player player() {
+
+    return player;
   }
 
   public ItemStack itemStack() {
@@ -69,8 +80,8 @@ public class ShopDeleteBlockEvent extends ShopEvent {
     return itemStack;
   }
 
-  public InventoryHolder holder() {
+  public InventoryHolder blockState() {
 
-    return holder;
+    return blockState;
   }
 }

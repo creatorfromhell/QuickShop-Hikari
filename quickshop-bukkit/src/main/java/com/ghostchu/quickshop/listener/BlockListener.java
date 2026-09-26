@@ -143,7 +143,7 @@ public class BlockListener extends AbstractProtectionListener {
         action.setAction(ShopAction.CANCELLED);
       }
 
-      ShopDeleteBlockEvent shopDeleteBlockEvent = new ShopDeleteBlockEvent(shop, itemInHand, (InventoryHolder)state);
+      ShopDeleteBlockEvent shopDeleteBlockEvent = new ShopDeleteBlockEvent(shop, p, itemInHand.clone(), state);
       shopDeleteBlockEvent.callCancellableEvent();
 
       if (shopDeleteBlockEvent.isCancelled()) {
