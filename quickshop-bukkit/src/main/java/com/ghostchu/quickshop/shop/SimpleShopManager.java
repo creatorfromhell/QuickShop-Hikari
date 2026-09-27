@@ -45,6 +45,15 @@ import com.ghostchu.quickshop.economy.transaction.QSEconomyTransaction;
 import com.ghostchu.quickshop.economy.transaction.QSEconomyTransactionBuilder;
 import com.ghostchu.quickshop.obj.QUserImpl;
 import com.ghostchu.quickshop.shop.cache.SimpleShopInventoryCountCache;
+import com.ghostchu.quickshop.shop.check.AutoSignCheck;
+import com.ghostchu.quickshop.shop.check.BlockCheck;
+import com.ghostchu.quickshop.shop.check.DoubleChestCheck;
+import com.ghostchu.quickshop.shop.check.ItemBlacklistCheck;
+import com.ghostchu.quickshop.shop.check.PriceLimitCheck;
+import com.ghostchu.quickshop.shop.check.ProtectionCheck;
+import com.ghostchu.quickshop.shop.check.ShopCreateFeeCheck;
+import com.ghostchu.quickshop.shop.check.ShopExistsCheck;
+import com.ghostchu.quickshop.shop.check.ShopLimitCheck;
 import com.ghostchu.quickshop.shop.inventory.BukkitInventoryWrapper;
 import com.ghostchu.quickshop.shop.inventory.BukkitInventoryWrapperManager;
 import com.ghostchu.quickshop.shop.tax.QuickShopTaxManager;
@@ -248,12 +257,77 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
       this.dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
       plugin.logger().warn("Invalid date time pattern configured '{}'", pattern);
     }
+
+    /*
+     * Check Order:
+     * - Block Check
+     * - Shop Limit
+     * - Item Blacklist
+     * - Protection
+     * - Shop Already Owned
+     * - Double Chest Check
+     * - Auto Sign Check
+     * - PriceLimitCheck
+     * - CreateFeeCheck
+     */
+    addCheck(new BlockCheck());
+    addCheck(new ShopLimitCheck());
+    addCheck(new ItemBlacklistCheck());
+    addCheck(new ProtectionCheck());
+    addCheck(new ShopExistsCheck());
+    addCheck(new DoubleChestCheck());
+    addCheck(new AutoSignCheck());
+    addCheck(new PriceLimitCheck());
+    addCheck(new ShopCreateFeeCheck());
+
   }
 
   @Override
   public LinkedHashMap<Key, ShopCheck> checks() {
 
     return checks;
+  }
+
+  /**
+   * Adds a new shop check to the system. This method is intended to handle the addition of
+   * ShopCheck objects to the relevant data structure or process.
+   *
+   * @param check the ShopCheck object to be added
+   *
+   * @since 6.3.0.4
+   */
+  @Override
+  public void addCheck(final ShopCheck check) {
+
+    checks.put(check.identifier(), check);
+  }
+
+  /**
+   * Retrieves the shop check associated with the specified key.
+   *
+   * @param key the unique identifier used to locate the shop check
+   *
+   * @return an Optional containing the ShopCheck if found, or an empty Optional if not found
+   *
+   * @since 6.3.0.4
+   */
+  @Override
+  public Optional<ShopCheck> getCheck(final Key key) {
+
+    return Optional.ofNullable(checks.get(key));
+  }
+
+  /**
+   * Removes the specified check associated with the given key.
+   *
+   * @param key the key associated with the check to be removed; cannot be null
+   *
+   * @since 6.3.0.4
+   */
+  @Override
+  public void removeCheck(final Key key) {
+
+    checks.remove(key);
   }
 
   /**
@@ -803,18 +877,6 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
       return;
     }
 
-    /*
-     * Check Order:
-     * - Block Check
-     * - Shop Limit
-     * - Item Blacklist
-     * - Protection
-     * - Shop Already Owned
-     * - Double Chest Check
-     * - Auto Sign Check
-     * - PriceLimitCheck
-     * - CreateFeeCheck
-     */
     final ShopCheckContext context = new ShopCheckContext(shop, shop.getOwner(), p, signBlock, bypassProtectionCheck, true, autoSign, allowNoSpaceForSign);
     for (final ShopCheck check : checks.values()) {
 

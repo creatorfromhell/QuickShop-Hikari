@@ -38,7 +38,42 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("ALL")
 public interface ShopManager {
 
+  /**
+   * Retrieves a LinkedHashMap containing the checks associated with the shop.
+   *
+   * @return a LinkedHashMap where the keys are of type Key and the values are of type ShopCheck,
+   *         representing the checks tied to the shop.
+   */
   LinkedHashMap<Key, ShopCheck> checks();
+
+  /**
+   * Adds a new shop check to the system. This method is intended to handle
+   * the addition of ShopCheck objects to the relevant data structure or process.
+   *
+   * @param check the ShopCheck object to be added
+   *
+   * @since 6.3.0.4
+   */
+  void addCheck(final ShopCheck check);
+
+  /**
+   * Retrieves the shop check associated with the specified key.
+   *
+   * @param key the unique identifier used to locate the shop check
+   * @return an Optional containing the ShopCheck if found, or an empty Optional if not found
+   *
+   * @since 6.3.0.4
+   */
+  Optional<ShopCheck> getCheck(final Key key);
+
+  /**
+   * Removes the specified check associated with the given key.
+   *
+   * @param key the key associated with the check to be removed; cannot be null
+   *
+   * @since 6.3.0.4
+   */
+  void removeCheck(final Key key);
 
   /**
    * Provides an instance of {@code IShopLayoutProvider} responsible for managing shop layouts.
