@@ -27,6 +27,7 @@ import com.ghostchu.quickshop.api.shop.cache.ShopCacheNamespacedKey;
 import com.ghostchu.quickshop.api.shop.check.ShopCheck;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckContext;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckResult;
+import com.ghostchu.quickshop.api.shop.check.ShopCheckType;
 import com.ghostchu.quickshop.api.shop.permission.BuiltInShopPermission;
 import com.ghostchu.quickshop.api.shop.state.ShopState;
 import com.ghostchu.quickshop.api.shop.state.impl.ActiveState;
@@ -879,6 +880,10 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
 
     final ShopCheckContext context = new ShopCheckContext(shop, shop.getOwner(), p, signBlock, bypassProtectionCheck, true, autoSign, allowNoSpaceForSign);
     for (final ShopCheck check : checks.values()) {
+
+      if (!check.appliesTo(ShopCheckType.CREATE)) {
+        continue;
+      }
 
       //TODO: Event call for ShopCheckEvent
 
