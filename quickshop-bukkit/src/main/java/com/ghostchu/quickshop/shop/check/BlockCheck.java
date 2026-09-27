@@ -28,7 +28,6 @@ import org.bukkit.Location;
 import org.jspecify.annotations.NonNull;
 
 import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_BLOCK;
-import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_SHOP_LIMIT;
 
 /**
  * The BlockCheck class is an implementation of the {@link ShopCheck} interface.
@@ -46,7 +45,7 @@ public class BlockCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return CHECK_BLOCK;
   }

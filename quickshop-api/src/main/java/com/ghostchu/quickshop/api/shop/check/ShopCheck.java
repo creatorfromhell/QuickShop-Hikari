@@ -34,7 +34,18 @@ public interface ShopCheck {
    *
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
+  @NotNull
   Key identifier();
+
+  /**
+   * Determines whether this shop check applies to the specified {@link ShopCheckType}.
+   *
+   * @param type the {@link ShopCheckType} representing the context in which the shop check is being applied
+   * @return {@code true} if this shop check applies to the specified type, otherwise {@code false}
+   */
+  default boolean appliesTo(@NotNull final ShopCheckType type) {
+    return true;
+  }
 
   /**
    * Performs a check based on the provided shop context, evaluating various
@@ -47,5 +58,5 @@ public interface ShopCheck {
    *         or arguments if applicable
    */
   @NotNull
-  ShopCheckResult check(@NotNull ShopCheckContext context);
+  ShopCheckResult check(@NotNull final ShopCheckContext context);
 }

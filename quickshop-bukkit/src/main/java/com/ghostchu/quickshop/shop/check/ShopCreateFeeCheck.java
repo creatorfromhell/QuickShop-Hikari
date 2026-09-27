@@ -19,7 +19,6 @@ package com.ghostchu.quickshop.shop.check;
  */
 
 import com.ghostchu.quickshop.QuickShop;
-import com.ghostchu.quickshop.QuickShopBukkit;
 import com.ghostchu.quickshop.api.obj.QUser;
 import com.ghostchu.quickshop.api.shop.Shop;
 import com.ghostchu.quickshop.api.shop.check.ShopCheck;
@@ -49,7 +48,7 @@ public class ShopCreateFeeCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return null;
   }

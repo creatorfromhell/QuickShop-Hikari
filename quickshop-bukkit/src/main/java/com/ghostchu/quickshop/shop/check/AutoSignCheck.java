@@ -18,7 +18,6 @@ package com.ghostchu.quickshop.shop.check;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.ghostchu.quickshop.QuickShop;
 import com.ghostchu.quickshop.api.shop.check.ShopCheck;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckContext;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckResult;
@@ -27,7 +26,6 @@ import org.bukkit.Material;
 import org.jspecify.annotations.NonNull;
 
 import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_AUTO_SIGN;
-import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_SHOP_LIMIT;
 
 /**
  * AutoSignCheck
@@ -43,7 +41,7 @@ public class AutoSignCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return CHECK_AUTO_SIGN;
   }

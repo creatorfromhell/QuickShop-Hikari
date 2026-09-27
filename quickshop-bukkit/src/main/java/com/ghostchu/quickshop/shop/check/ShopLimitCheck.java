@@ -45,7 +45,7 @@ public class ShopLimitCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return CHECK_SHOP_LIMIT;
   }

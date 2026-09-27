@@ -20,34 +20,22 @@ package com.ghostchu.quickshop.shop.check;
 
 import com.ghostchu.quickshop.QuickShop;
 import com.ghostchu.quickshop.api.economy.EconomyProvider;
-import com.ghostchu.quickshop.api.event.Phase;
 import com.ghostchu.quickshop.api.shop.PriceLimiterCheckResult;
 import com.ghostchu.quickshop.api.shop.Shop;
 import com.ghostchu.quickshop.api.shop.check.ShopCheck;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckContext;
 import com.ghostchu.quickshop.api.shop.check.ShopCheckResult;
-import com.ghostchu.quickshop.economy.transaction.QSEconomyTransaction;
-import com.ghostchu.quickshop.obj.QUserImpl;
 import com.ghostchu.quickshop.util.Util;
 import com.ghostchu.quickshop.util.logger.Log;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
-import org.bukkit.block.TileState;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.jspecify.annotations.NonNull;
 
 import java.math.BigDecimal;
 
 import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_PRICE_LIMIT;
-import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_SHOP_LIMIT;
-import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP;
-import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP_OWNER;
 
 /**
  * PriceLimitCheck
@@ -63,7 +51,7 @@ public class PriceLimitCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return CHECK_PRICE_LIMIT;
   }

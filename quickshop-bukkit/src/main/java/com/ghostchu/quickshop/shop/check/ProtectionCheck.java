@@ -31,7 +31,6 @@ import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 
 import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_PROTECTION;
-import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_SHOP_LIMIT;
 
 /**
  * ProtectionCheck
@@ -47,7 +46,7 @@ public class ProtectionCheck implements ShopCheck {
    * @return a {@link Key} object representing the unique identifier of the shop check
    */
   @Override
-  public Key identifier() {
+  public @NonNull Key identifier() {
 
     return CHECK_PROTECTION;
   }
