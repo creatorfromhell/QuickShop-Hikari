@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -390,6 +391,31 @@ public class SimpleDatabaseHelperV2 implements DatabaseHelper {
                        location.getBlockZ(),
                        shopId)
             .executeFuture();
+  }
+
+  /**
+   * Updates the mapping of a shop to a specific location in the database.
+   *
+   * @param shopId   The unique identifier of the shop.
+   * @param location The new location to which the shop should be mapped. Must not be null.
+   *
+   * @return A CompletableFuture that completes with the number of affected rows in the database.
+   */
+  @Override
+  public CompletableFuture<Void> updateShopMap(final long shopId, @NonNull final Location location) {
+
+    if(shopId <= 0) {
+
+      throw new IllegalArgumentException("Shop id must be greater than 0. Provided ID: " + shopId);
+    }
+
+    return DataTables.SHOP_MAP.createUpdate()
+            .setColumnValues("world", location.getWorld().getName())
+            .setColumnValues("x", location.getBlockX())
+            .setColumnValues("y", location.getBlockY())
+            .setColumnValues("z", location.getBlockZ())
+            .addCondition("shop", shopId)
+            .build().executeFuture();
   }
 
   @Override

@@ -80,7 +80,7 @@ public class ShopDeleteBlockEvent extends ShopEvent {
     return itemStack;
   }
 
-  public InventoryHolder blockState() {
+  public BlockState blockState() {
 
     return blockState;
   }

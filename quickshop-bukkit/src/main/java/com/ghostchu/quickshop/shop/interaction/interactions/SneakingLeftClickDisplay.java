@@ -9,7 +9,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
-import static com.ghostchu.quickshop.shop.display.display.DisplayEntityItemManager.DISPLAY_ITEM_KEY_INSTANCE;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_DISPLAY_ITEM_KEY_INSTANCE;
 
 public class SneakingLeftClickDisplay implements InteractionType {
 
@@ -44,7 +44,7 @@ public class SneakingLeftClickDisplay implements InteractionType {
       return false;
     }
 
-    if(!interaction.getPersistentDataContainer().has(DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING)) {
+    if(!interaction.getPersistentDataContainer().has(PDC_DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING)) {
       return false;
     }
 

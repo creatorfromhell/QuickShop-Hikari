@@ -18,7 +18,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Optional;
 
-import static com.ghostchu.quickshop.shop.display.display.DisplayEntityItemManager.DISPLAY_ITEM_KEY_INSTANCE;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_DISPLAY_ITEM_KEY_INSTANCE;
 
 public class InteractionEntityListener implements Listener {
 
@@ -43,7 +43,7 @@ public class InteractionEntityListener implements Listener {
       return;
     }
 
-    final Location location = Util.locationFromPDCString(event.getRightClicked().getWorld(), event.getRightClicked().getPersistentDataContainer().get(DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING));
+    final Location location = Util.locationFromPDCString(event.getRightClicked().getWorld(), event.getRightClicked().getPersistentDataContainer().get(PDC_DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING));
     if(location == null) {
       Log.debug("Interaction: Location is empty");
       return;
@@ -74,7 +74,7 @@ public class InteractionEntityListener implements Listener {
       return;
     }
 
-    final Location location = Util.locationFromPDCString(event.getEntity().getWorld(), event.getEntity().getPersistentDataContainer().get(DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING));
+    final Location location = Util.locationFromPDCString(event.getEntity().getWorld(), event.getEntity().getPersistentDataContainer().get(PDC_DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING));
     if(location == null) {
       Log.debug("Interaction: Location is empty");
       return;

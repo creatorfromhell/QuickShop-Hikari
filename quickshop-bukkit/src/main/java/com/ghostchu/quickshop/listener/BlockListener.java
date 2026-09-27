@@ -32,12 +32,11 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerSignOpenEvent;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.ghostchu.quickshop.shop.SimpleShopManager.CHEST_SHOP;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP;
 
 /**
  * BlockListener to listening events about block events
@@ -70,7 +69,7 @@ public class BlockListener extends AbstractProtectionListener {
     final BlockState state = block.getState(false);
 
     //run pdc check first instead of lookup
-    if (state instanceof final TileState tileState && tileState.getPersistentDataContainer().has(CHEST_SHOP)) {
+    if (state instanceof final TileState tileState && tileState.getPersistentDataContainer().has(PDC_CHEST_SHOP)) {
 
       event.setCancelled(true);
       return;
@@ -150,6 +149,8 @@ public class BlockListener extends AbstractProtectionListener {
         e.setCancelled(true);
         return;
       }
+
+      //TODO: add ability to not remove shop from database in event?
 
       plugin.logEvent(new ShopRemoveLog(QUserImpl.createFullFilled(p), "BlockBreak(player)", shop.saveToInfoStorage()));
       plugin.getShopManager().deleteShop(shop);

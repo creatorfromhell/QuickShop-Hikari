@@ -99,7 +99,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.ghostchu.quickshop.shop.SimpleShopManager.CHEST_SHOP_OWNER;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP_OWNER;
 import static com.ghostchu.quickshop.util.Util.waitForFuture;
 import static java.math.BigDecimal.ZERO;
 
@@ -115,7 +115,7 @@ public class ContainerShop implements Shop<Double, Location>, Reloadable {
   private final Map<Key, String> extraMap = new ConcurrentHashMap<>();
 
   @NotNull
-  private final Location location;
+  private Location location;
   private final QuickShop plugin;
   private final UUID runtimeRandomUniqueId = UUID.randomUUID();
   @NotNull
@@ -456,6 +456,12 @@ public class ContainerShop implements Shop<Double, Location>, Reloadable {
     return yaml;
   }
 
+  @ApiStatus.Internal
+  public void relocate(@NotNull final Location location) {
+    this.location = location.clone();
+    setDirty();
+  }
+
   /**
    * @return The chest this shop is based on.
    */
@@ -598,7 +604,7 @@ public class ContainerShop implements Shop<Double, Location>, Reloadable {
   @Override
   public Location bukkitLocation() {
 
-    return this.location;
+    return this.location.clone();
   }
 
   /**
@@ -629,7 +635,7 @@ public class ContainerShop implements Shop<Double, Location>, Reloadable {
     if (owner.getUniqueId() != null) {
       final Block block = this.location.getBlock();
       if(block.getState(false) instanceof final TileState tileState) {
-        tileState.getPersistentDataContainer().set(CHEST_SHOP_OWNER, PersistentDataType.STRING, owner.getUniqueId().toString());
+        tileState.getPersistentDataContainer().set(PDC_CHEST_SHOP_OWNER, PersistentDataType.STRING, owner.getUniqueId().toString());
         tileState.update(true);
       }
     }
@@ -1683,7 +1689,7 @@ public class ContainerShop implements Shop<Double, Location>, Reloadable {
       return;
     }
     try(final PerfMonitor ignored = new PerfMonitor("Shop Inventory Locate", Duration.of(1, ChronoUnit.SECONDS))) {
-      if(getInventory() == null) {
+      if(getInventory() == null && !shopState.validWithoutInventory()) { //TODO: Probably move this check to db loading level
         plugin.logger().warn("Failed to load shop: {}: {}: {}", symbolLink, this.getClass().getName(), "Inventory is null");
         if(plugin.getConfig().getBoolean("debug.delete-corrupt-shops")) {
           plugin.logger().warn("Deleting corrupt shop...");

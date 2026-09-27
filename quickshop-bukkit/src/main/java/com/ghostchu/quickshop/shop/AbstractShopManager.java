@@ -32,6 +32,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ public abstract class AbstractShopManager implements ShopManager {
     shopCache = new SimpleShopCache(plugin, map);
   }
 
+
   /**
    * Adds a shop to the world. Does NOT require the chunk or world to be loaded Call shop.onLoad by
    * yourself
@@ -86,24 +88,37 @@ public abstract class AbstractShopManager implements ShopManager {
    */
   protected void addShopToLookupTable(@NotNull final Shop shop) {
 
-    final String world = shop.bukkitLocation().getWorld().getName();
-    final Map<ShopChunk, Map<Location, Shop>> inWorld = shops.computeIfAbsent(world, k->new MapMaker().initialCapacity(3).makeMap());
+    addShopLocationLookup(shop);
+
+    allShops.put(shop.getRuntimeRandomUniqueId(), shop);
+  }
+
+  private void addShopLocationLookup(@NotNull final Shop shop) {
+
+    //Clone the object to prevent issues in the future with portable shops.
+    final Location location = shop.bukkitLocation().clone();
+    final String world = Objects.requireNonNull(location.getWorld()).getName();
+
+    final Map<ShopChunk, Map<Location, Shop>> inWorld = shops.computeIfAbsent(world, k -> new MapMaker().initialCapacity(3).makeMap());
+
     // There's no world storage yet. We need to create that map.
     // Put it in the data universe
     // Calculate the chunks coordinates. These are 1,2,3 for each chunk, NOT
     // location rounded to the nearest 16.
-    final int x = shop.bukkitLocation().getBlockX() >> 4;
-    final int z = shop.bukkitLocation().getBlockZ() >> 4;
+    final int x = location.getBlockX() >> 4;
+    final int z = location.getBlockZ() >> 4;
+
     // Get the chunk set from the world info
     final ShopChunk shopChunk = new SimpleShopChunk(world, x, z);
-    final Map<Location, Shop> inChunk =
-            inWorld.computeIfAbsent(shopChunk, k->new MapMaker().initialCapacity(1).makeMap());
+
+    final Map<Location, Shop> inChunk = inWorld.computeIfAbsent(shopChunk, k -> new MapMaker().initialCapacity(1).makeMap());
+
+
     // That chunk data hasn't been created yet - Create it!
     // Put it in the world
     // Put the shop in its location in the chunk list.
-    inChunk.put(shop.bukkitLocation(), shop);
-    shopCache.invalidate(null, shop.bukkitLocation());
-    allShops.put(shop.getRuntimeRandomUniqueId(), shop);
+    inChunk.put(location, shop);
+    shopCache.invalidate(null, location);
   }
 
   /**
@@ -171,22 +186,38 @@ public abstract class AbstractShopManager implements ShopManager {
    */
   private void removeShopFromLookupTable(@NotNull final Shop shop) {
 
-    final Location loc = shop.bukkitLocation();
-    final String world = Objects.requireNonNull(loc.getWorld()).getName();
-    final Map<ShopChunk, Map<Location, Shop>> inWorld = this.getShops().get(world);
-    if(inWorld == null) {
-      return;
-    }
-    final int x = loc.getBlockX() >> 4;
-    final int z = loc.getBlockZ() >> 4;
-    final ShopChunk shopChunk = new SimpleShopChunk(world, x, z);
-    final Map<Location, Shop> inChunk = inWorld.get(shopChunk);
-    if(inChunk == null) {
-      return;
-    }
-    inChunk.remove(loc);
-    shopCache.invalidate(null, shop.bukkitLocation());
+    removeShopLocationLookup(shop.bukkitLocation());
+
     allShops.remove(shop.getRuntimeRandomUniqueId());
+  }
+
+  private void removeShopLocationLookup(@NotNull final Location location) {
+
+    final String world = Objects.requireNonNull(location.getWorld()).getName();
+
+    final Map<ShopChunk, Map<Location, Shop>> inWorld = this.getShops().get(world);
+
+    if (inWorld != null) {
+
+      final ShopChunk shopChunk = new SimpleShopChunk(world, location.getBlockX() >> 4, location.getBlockZ() >> 4);
+
+      final Map<Location, Shop> inChunk = inWorld.get(shopChunk);
+
+      if (inChunk != null) {
+        inChunk.remove(location);
+
+        if (inChunk.isEmpty()) {
+          inWorld.remove(shopChunk);
+        }
+      }
+
+      if (inWorld.isEmpty()) {
+
+        this.getShops().remove(world);
+      }
+    }
+
+    shopCache.invalidate(null, location);
   }
 
 
@@ -457,6 +488,19 @@ public abstract class AbstractShopManager implements ShopManager {
             });
   }
 
+  /**
+   * Relocates the specified shop to a new location.
+   *
+   * @param shop        the shop to be relocated; must not be null.
+   * @param newLocation the new location to where the shop should be moved; must not be null.
+   *
+   * @return a CompletableFuture that completes when the relocation process finishes.
+   */
+  @Override
+  public CompletableFuture<Void> relocateShop(@NonNull final Shop shop, @NonNull final Location newLocation) {
+
+    return null;
+  }
 
   /**
    * Returns a map of World - Chunk - Shop

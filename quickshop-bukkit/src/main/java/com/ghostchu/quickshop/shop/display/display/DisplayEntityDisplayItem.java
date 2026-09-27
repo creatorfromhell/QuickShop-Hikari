@@ -45,7 +45,7 @@ import org.joml.Vector3f;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.ghostchu.quickshop.shop.display.display.DisplayEntityItemManager.DISPLAY_ITEM_KEY_INSTANCE;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_DISPLAY_ITEM_KEY_INSTANCE;
 
 /**
  * DisplayEntityDisplayItem
@@ -134,7 +134,7 @@ public class DisplayEntityDisplayItem extends AbstractDisplayItem implements Rel
 
     if (plugin.getConfig().getBoolean("shop.display-hitbox", false)) {
       interactionEntity = EntityUtil.spawnInteractionFor(null, getDisplayLocation().toCenterLocation().add(0.0, 0.4, 0.0), 0);
-      interactionEntity.getPersistentDataContainer().set(DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING, Util.locationToPDCString(shop.bukkitLocation()));
+      interactionEntity.getPersistentDataContainer().set(PDC_DISPLAY_ITEM_KEY_INSTANCE, PersistentDataType.STRING, Util.locationToPDCString(shop.bukkitLocation()));
     }
 
     final int blockDistance = plugin.getConfig().getInt("shop.text-display.range-blocks", 8);

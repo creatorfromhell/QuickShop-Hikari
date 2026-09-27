@@ -24,6 +24,9 @@ import com.ghostchu.quickshop.api.shop.PriceLimiterCheckResult;
 import com.ghostchu.quickshop.api.shop.Shop;
 import com.ghostchu.quickshop.api.shop.ShopManager;
 import com.ghostchu.quickshop.api.shop.cache.ShopCacheNamespacedKey;
+import com.ghostchu.quickshop.api.shop.check.ShopCheck;
+import com.ghostchu.quickshop.api.shop.check.ShopCheckContext;
+import com.ghostchu.quickshop.api.shop.check.ShopCheckResult;
 import com.ghostchu.quickshop.api.shop.permission.BuiltInShopPermission;
 import com.ghostchu.quickshop.api.shop.state.ShopState;
 import com.ghostchu.quickshop.api.shop.state.impl.ActiveState;
@@ -56,6 +59,7 @@ import com.ghostchu.simplereloadlib.ReloadResult;
 import com.ghostchu.simplereloadlib.ReloadStatus;
 import com.ghostchu.simplereloadlib.Reloadable;
 import com.google.common.collect.Maps;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -93,6 +97,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,17 +111,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
+import static com.ghostchu.quickshop.api.QuickShopKeys.CHECK_SHOP_LIMIT;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP;
+import static com.ghostchu.quickshop.api.QuickShopKeys.PDC_CHEST_SHOP_OWNER;
+
 /**
  * Manage a lot of shops.
  */
 public class SimpleShopManager extends AbstractShopManager implements ShopManager, Reloadable {
 
-  public static final String DEFAULT_TYPE = "BUYING";
-
-  public static final NamespacedKey CHEST_SHOP = new NamespacedKey(QuickShop.getInstance().getJavaPlugin(), "chest_shop");
-  public static final NamespacedKey CHEST_SHOP_OWNER = new NamespacedKey(QuickShop.getInstance().getJavaPlugin(), "chest_shop_owner");
-
   protected final Map<UUID, Long> cooldowns = Maps.newConcurrentMap();
+
+  protected final LinkedHashMap<Key, ShopCheck> checks = new LinkedHashMap<>();
+
   protected final Map<Integer, IShopType> shopTypes = Maps.newConcurrentMap();
   protected final Map<String, ShopState> shopStates = Maps.newConcurrentMap();
   protected final ConcurrentLinkedQueue<Long> inDeletion = new ConcurrentLinkedQueue<>();
@@ -237,10 +244,16 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     try {
       this.dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
       this.dateTimeFormatter.format(LocalDateTime.now()); // Test it out
-    } catch (Throwable throwable) {
+    } catch (final Throwable throwable) {
       this.dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
       plugin.logger().warn("Invalid date time pattern configured '{}'", pattern);
     }
+  }
+
+  @Override
+  public LinkedHashMap<Key, ShopCheck> checks() {
+
+    return checks;
   }
 
   /**
@@ -581,11 +594,11 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
 
     QuickShop.folia().getScheduler().runAtLocation(info.getLocation(), task -> {
       final BlockState state = info.getLocation().getBlock().getState(false);
-      if(state instanceof InventoryHolder holder) {
+      if(state instanceof final InventoryHolder holder) {
         // Create the basic shop
         final String symbolLink;
         final InventoryWrapperManager manager = plugin.getInventoryWrapperManager();
-        if(manager instanceof BukkitInventoryWrapperManager bukkitInventoryWrapperManager) {
+        if(manager instanceof final BukkitInventoryWrapperManager bukkitInventoryWrapperManager) {
           symbolLink = bukkitInventoryWrapperManager.mklink(info.getLocation());
         } else {
           symbolLink = manager.mklink(new BukkitInventoryWrapper((holder).getInventory()));
@@ -767,181 +780,115 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
   public void createShop(@NotNull final Shop shop, @Nullable final Block signBlock, final boolean bypassProtectionCheck) throws IllegalStateException {
 
     Util.ensureThread(false);
-    final Player p = shop.getOwner().getBukkitPlayer().orElse(null);
 
-    // Player offline check
-    if(p == null || !p.isOnline()) {
-      throw new IllegalStateException("The owner creating the shop is offline or not exist");
-    }
+    final Player p = shop.getOwner().getBukkitPlayer().orElseThrow(() -> new IllegalStateException("The owner creating the shop is offline or does not exist"));
 
-    if(plugin.getEconomyManager().provider() == null) {
+    final EconomyProvider econ = plugin.getEconomyManager().provider();
+    if(econ == null) {
       MsgUtil.sendDirectMessage(p, Component.text("Error: Economy system not loaded, type /quickshop main command to get details.").color(NamedTextColor.RED));
       return;
     }
 
-    // Check if player has reached the max shop limit
-    if(isReachedLimit(shop.getOwner(), true)) {
-      return;
-    }
-    // Check if target block is allowed shop-block
-    if(!Util.canBeShop(shop.bukkitLocation().getBlock())) {
-      plugin.text().of(p, "chest-was-removed").send();
-      return;
-    }
-    // Check if item has been blacklisted
-    if(plugin.getShopItemBlackList().isBlacklisted(shop.getItem()) && !plugin.perm().hasPermission(p, "quickshop.bypass." + shop.getItem().getType().name().toLowerCase(Locale.ROOT))) {
-      plugin.text().of(p, "blacklisted-item").send();
-      return;
-    }
     // Check if server/player allowed to create stacking shop
     if(plugin.isAllowStack() && !plugin.perm().hasPermission(p, "quickshop.create.stacks")) {
       Log.debug("Player " + p.getName() + " no permission to create stacks shop, forcing creating single item shop");
       shop.getItem().setAmount(1);
     }
 
-    // Checking the shop can be created
-    Log.debug("Calling for protection check...");
+    //Calling the event before the checks saves us from running all of the checks.
+    ShopCreateEvent event = new ShopCreateEvent(Phase.PRE_CANCELLABLE, shop, shop.getOwner(), shop.bukkitLocation());
+    if(event.callCancellableEvent()) {
 
-    // Protection check
-    if(!bypassProtectionCheck) {
-      final Result result = plugin.getPermissionChecker().canBuild(p, shop.bukkitLocation());
-      if(!result.isSuccess()) {
-        plugin.text().of(p, "3rd-plugin-build-check-failed", result.getMessage()).send();
-        if(plugin.perm().hasPermission(p, "quickshop.alerts")) {
-          plugin.text().of(p, "3rd-plugin-build-check-failed-admin", result.getMessage(), result.getListener()).send();
-        }
-        Log.debug("Failed to create shop because protection check failed, found:" + result.getMessage());
+      plugin.text().of(p, "plugin-cancelled", event.getCancelReason()).send();
+      return;
+    }
+
+    /*
+     * Check Order:
+     * - Block Check
+     * - Shop Limit
+     * - Item Blacklist
+     * - Protection
+     * - Shop Already Owned
+     * - Double Chest Check
+     * - Auto Sign Check
+     * - PriceLimitCheck
+     * - CreateFeeCheck
+     */
+    final ShopCheckContext context = new ShopCheckContext(shop, shop.getOwner(), p, signBlock, bypassProtectionCheck, true, autoSign, allowNoSpaceForSign);
+    for (final ShopCheck check : checks.values()) {
+
+      //TODO: Event call for ShopCheckEvent
+
+      Log.debug("Running check: " + check.identifier().asString());
+
+      final ShopCheckResult result = check.check(context);
+
+      Log.debug("Check result: " + result.success());
+      if (!result.success()) {
+
+        plugin.text().of(p, result.messageKey(), result.arguments()).send();
         return;
       }
     }
 
-    // Check if the shop is already created
-    if(plugin.getShopManager().getShop(shop.bukkitLocation()) != null) {
-      plugin.text().of(p, "shop-already-owned").send();
-      return;
+    // The shop about successfully created
+    if(!useShopLock) {
+      plugin.text().of(p, "shops-arent-locked").send();
     }
 
-    // Check if player and server allow double chest shop
-    if(Util.isDoubleChest(shop.bukkitLocation().getBlock().getBlockData()) && !plugin.perm().hasPermission(p, "quickshop.create.double")) {
-      plugin.text().of(p, "no-double-chests").send();
-      return;
-    }
+    // Shop info sign check
+    if(signBlock != null && autoSign) {
+      if(signBlock.getType().isAir() || signBlock.getType() == Material.WATER) {
+        final BlockState signState = this.makeShopSign(shop.bukkitLocation().getBlock(), signBlock, null);
+        if(signState instanceof final Sign puttedSign) {
+          try {
 
-    // Sign check
-    if(autoSign) {
-      if(signBlock == null) {
-        if(!allowNoSpaceForSign) {
-          plugin.text().of(p, "failed-to-put-sign").send();
-          return;
-        }
-      } else {
-        final Material signType = signBlock.getType();
-        if(signType != Material.WATER && !signType.isAir() && !allowNoSpaceForSign) {
-          plugin.text().of(p, "failed-to-put-sign").send();
-          return;
+            shop.claimShopSign(puttedSign);
+          } catch(final Throwable ignored) {
+          }
         }
       }
     }
 
-    // Price limit checking
-    final PriceLimiterCheckResult priceCheckResult = this.priceLimiter.check(p, shop.getItem(), plugin.getCurrency(), shop.getPrice(), shop.shopType());
-    final String currency = (shop.getCurrency() == null)? ((plugin.getCurrency() == null)? "" : plugin.getCurrency()) : shop.getCurrency();
-    final World world = shop.bukkitLocation().getWorld();
-    final EconomyProvider econ = plugin.getEconomyManager().provider();
+    addShopToLookupTable(shop);
+    registerShop(shop, true);
+    loadShop(shop);
 
-    final double min = priceCheckResult.getMin();
-    final double max = priceCheckResult.getMax();
-    final String minFormatted = econ != null? econ.format(BigDecimal.valueOf(min), world.getName(), currency) : String.valueOf(min);
-    final String maxFormatted = econ != null? econ.format(BigDecimal.valueOf(max), world.getName(), currency) : String.valueOf(max);
+    //set PDC on shop block
+    final Block block = shop.getShopBlock();
+    if(block.getState(false) instanceof final TileState tileState) {
+      if (shop.getOwner().getUniqueId() != null) {
 
-    switch(priceCheckResult.getStatus()) {
-      case REACHED_PRICE_MIN_LIMIT ->
-              plugin.text().of(p, "price-too-cheap", minFormatted).send();
-      case REACHED_PRICE_MAX_LIMIT ->
-              plugin.text().of(p, "price-too-high", maxFormatted).send();
-      case PRICE_RESTRICTED -> {
-        if(min > 0 && max >= 0) {
-          plugin.text().of(p, "restricted-prices", Util.getItemStackName(shop.getItem()), minFormatted, maxFormatted).send();
-        } else if(min > 0) {
-          plugin.text().of(p, "restricted-price-min", Util.getItemStackName(shop.getItem()), minFormatted).send();
-        } else {
-          plugin.text().of(p, "restricted-price-max", Util.getItemStackName(shop.getItem()), maxFormatted).send();
-        }
+        tileState.getPersistentDataContainer().set(PDC_CHEST_SHOP_OWNER, PersistentDataType.STRING, shop.getOwner().getUniqueId().toString());
       }
-      case NOT_VALID -> plugin.text().of(p, "not-a-number", shop.getPrice()).send();
-      case NOT_A_WHOLE_NUMBER -> plugin.text().of(p, "not-a-integer", shop.getPrice()).send();
-      case PASS -> {
+      tileState.getPersistentDataContainer().set(PDC_CHEST_SHOP, PersistentDataType.LONG, shop.getShopId());
 
-        // Calling ShopCreateEvent
-        ShopCreateEvent event = new ShopCreateEvent(Phase.PRE_CANCELLABLE, shop, shop.getOwner(), shop.bukkitLocation());
+      tileState.update(true);
+    }
 
-        if(event.callCancellableEvent()) {
+    shop.setSignText(plugin.getTextManager().findRelativeLanguages(p));
 
-          plugin.text().of(p, "plugin-cancelled", event.getCancelReason()).send();
-          return;
-        }
-        // Handle create cost
-        // This must be called after the event has been called.
-        // Else, if the event is cancelled, they won't get their
-        // money back.
-        double createCost = shopCreateCost;
-        if(plugin.perm().hasPermission(p, "quickshop.bypasscreatefee")) {
-          createCost = 0;
-        }
-        if(createCost > 0) {
-          final QSEconomyTransaction economyTransaction = QSEconomyTransaction.builder().taxer(cacheTaxAccount).from(QUserImpl.createFullFilled(p)).to(null).amount(BigDecimal.valueOf(createCost)).currency(plugin.getCurrency()).world(shop.bukkitLocation().getWorld().getName()).build();
-          if(!economyTransaction.completable()) {
-            plugin.text().of(p, "you-cant-afford-a-new-shop", format(createCost, shop)).send();
-            return;
-          }
-          if(!economyTransaction.safeCommit()) {
-            plugin.text().of(p, "economy-transaction-failed", economyTransaction.lastError()).send();
-            plugin.logger().error("EconomyTransaction Failed, last error:{} ", economyTransaction.lastError());
-            plugin.logger().error("Tips: If you see any economy plugin name appears above, please don't ask QuickShop support. Contact with developer of economy plugin. QuickShop didn't process the transaction, we only receive the transaction result from your economy plugin.");
-            return;
-          }
-        }
+    event = event.clone(Phase.MAIN);
+    event.callEvent();
+  }
 
-        // The shop about successfully created
-        if(!useShopLock) {
-          plugin.text().of(p, "shops-arent-locked").send();
-        }
+  @Override
+  public int shopsOwnedByPlayer(@NotNull final QUser p) {
 
-        // Shop info sign check
-        if(signBlock != null && autoSign) {
-          if(signBlock.getType().isAir() || signBlock.getType() == Material.WATER) {
-            final BlockState signState = this.makeShopSign(shop.bukkitLocation().getBlock(), signBlock, null);
-            if(signState instanceof Sign puttedSign) {
-              try {
+    if (useOldCanBuildAlgorithm) {
+      return getAllShops(p).size();
+    }
 
-                shop.claimShopSign(puttedSign);
-              } catch(final Throwable ignored) {
-              }
-            }
-          }
-        }
-        addShopToLookupTable(shop);
-        registerShop(shop, true);
-        loadShop(shop);
 
-        //set PDC on shop block
-        final Block block = shop.getShopBlock();
-        if(block.getState(false) instanceof TileState tileState) {
-          if (shop.getOwner().getUniqueId() != null) {
+    int owned = 0;
+    for(final Shop shop : getAllShops(p)) {
 
-            tileState.getPersistentDataContainer().set(CHEST_SHOP_OWNER, PersistentDataType.STRING, shop.getOwner().getUniqueId().toString());
-          }
-          tileState.getPersistentDataContainer().set(CHEST_SHOP, PersistentDataType.LONG, shop.getShopId());
-
-          tileState.update(true);
-        }
-
-        shop.setSignText(plugin.getTextManager().findRelativeLanguages(p));
-
-        event = event.clone(Phase.MAIN);
-        event.callEvent();
+      if(!shop.isUnlimited()) {
+        owned++;
       }
     }
+    return owned;
   }
 
   /**
@@ -956,32 +903,25 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
   public boolean isReachedLimit(@NotNull final QUser p, final boolean message) {
 
     Util.ensureThread(false);
-    if(plugin.getRankLimiter().isLimit()) {
-      int owned = 0;
-      if(useOldCanBuildAlgorithm) {
-        owned = getAllShops(p).size();
-      } else {
-        for(final Shop shop : getAllShops(p)) {
-          if(!shop.isUnlimited()) {
-            owned++;
-          }
-        }
-      }
-      final int max = plugin.getRankLimiter().getShopLimit(p);
-      final boolean limitReached = owned >= max;
-      Log.debug("CanBuildShop check for " + p.getDisplay() + " owned: " + owned + "; max: " + max);
 
-      if(limitReached && message) {
+    final ShopCheck limitCheck = checks.get(CHECK_SHOP_LIMIT);
+    if (limitCheck == null) {
 
-        final Optional<Player> playerOptional = p.getBukkitPlayer();
-        if(playerOptional.isPresent()) {
-
-          plugin.text().of(p, "reached-maximum-can-create", owned, max).send();
-        }
-      }
-
-      return limitReached;
+      return true;
     }
+
+    final ShopCheckResult result = limitCheck.check(new ShopCheckContext(null, p, null, null, false, message, false, false));
+
+    if (!result.success() && message) {
+
+      final Optional<Player> playerOptional = p.getBukkitPlayer();
+      if(playerOptional.isPresent()) {
+
+        plugin.text().of(p, result.messageKey(), result.arguments()).send();
+      }
+      return true;
+    }
+
     return false;
   }
 
@@ -1203,7 +1143,7 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
       }
       if(shouldDisplayPotionEffects) {
         if(plugin.getGameVersion().isNewPotionAPI()) {
-          if(items.hasItemMeta() && (items.getItemMeta() instanceof PotionMeta potionMeta)) {
+          if(items.hasItemMeta() && (items.getItemMeta() instanceof final PotionMeta potionMeta)) {
             final List<PotionEffect> effects = new ArrayList<>();
             if(potionMeta.getBasePotionType() != null) {
               effects.addAll(potionMeta.getBasePotionType().getPotionEffects());
@@ -1224,7 +1164,7 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
             }
           }
         } else {
-          if(items.getItemMeta() instanceof PotionMeta potionMeta) {
+          if(items.getItemMeta() instanceof final PotionMeta potionMeta) {
             final PotionData potionData = potionMeta.getBasePotionData();
             final PotionEffectType potionEffectType = potionData.getType().getEffectType();
             if(potionEffectType != null) {
@@ -1320,10 +1260,10 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     signBlock.setType(signMaterial == null? Util.getSignMaterial() : signMaterial);
     final BlockState signBlockState = signBlock.getState(false);
     final BlockData signBlockData = signBlockState.getBlockData();
-    if(signIsWatered && (signBlockData instanceof Waterlogged waterable)) {
+    if(signIsWatered && (signBlockData instanceof final Waterlogged waterable)) {
       waterable.setWaterlogged(true); // Looks like sign directly put in water
     }
-    if(signBlockData instanceof WallSign wallSignBlockData) {
+    if(signBlockData instanceof final WallSign wallSignBlockData) {
       final BlockFace bf = container.getFace(signBlock);
       if(bf != null) {
         wallSignBlockData.setFacing(bf);
@@ -1464,9 +1404,9 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     }
 
     final Block shopBlock = shop.getShopBlock();
-    if(shopBlock.getState(false) instanceof TileState state) {
-      state.getPersistentDataContainer().remove(CHEST_SHOP);
-      state.getPersistentDataContainer().remove(CHEST_SHOP_OWNER);
+    if(shopBlock.getState(false) instanceof final TileState state) {
+      state.getPersistentDataContainer().remove(PDC_CHEST_SHOP);
+      state.getPersistentDataContainer().remove(PDC_CHEST_SHOP_OWNER);
     }
     refundShop(shop);
     unloadShop(shop);
@@ -1683,12 +1623,14 @@ public class SimpleShopManager extends AbstractShopManager implements ShopManage
     }
   }
 
+  @Override
   @Nullable
   public QUser getCacheTaxAccount() {
 
     return this.cacheTaxAccount;
   }
 
+  @Override
   public QUser getCacheUnlimitedShopAccount() {
 
     return this.cacheUnlimitedShopAccount;

@@ -25,8 +25,7 @@ public interface PriceLimiter {
   PriceLimiterCheckResult check(@NotNull CommandSender sender, @NotNull ItemStack stack, @Nullable String currency, double price);
 
   @NotNull
-  default PriceLimiterCheckResult check(@NotNull CommandSender sender, @NotNull ItemStack stack, @Nullable String currency, double price,
-                                        @Nullable IShopType shopType) {
+  default PriceLimiterCheckResult check(@NotNull final CommandSender sender, @NotNull final ItemStack stack, @Nullable final String currency, final double price, @Nullable final IShopType shopType) {
     return check(sender, stack, currency, price);
   }
 
@@ -44,8 +43,8 @@ public interface PriceLimiter {
   PriceLimiterCheckResult check(@NotNull QUser user, @NotNull ItemStack stack, @Nullable String currency, double price);
 
   @NotNull
-  default PriceLimiterCheckResult check(@NotNull QUser user, @NotNull ItemStack stack, @Nullable String currency, double price,
-                                        @Nullable IShopType shopType) {
+  default PriceLimiterCheckResult check(@NotNull final QUser user, @NotNull final ItemStack stack, @Nullable final String currency, final double price, @Nullable final IShopType shopType) {
+
     return check(user, stack, currency, price);
   }
 }

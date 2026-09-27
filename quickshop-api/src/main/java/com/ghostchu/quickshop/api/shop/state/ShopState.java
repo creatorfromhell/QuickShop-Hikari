@@ -65,6 +65,17 @@ public interface ShopState {
   }
 
   /**
+   * Determines whether the shop state is considered valid without an associated inventory.
+   *
+   * @return {@code true} if the shop state can be valid without an inventory, otherwise {@code false}.
+   *
+   * @since 6.4.0.4
+   */
+  default boolean validWithoutInventory() {
+    return false;
+  }
+
+  /**
    * Translation key to explain why trading is unavailable.
    * Null if trading is allowed.
    */

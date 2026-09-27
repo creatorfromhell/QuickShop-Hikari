@@ -4,9 +4,11 @@ import com.ghostchu.quickshop.api.economy.EconomyProvider;
 import com.ghostchu.quickshop.api.inventory.InventoryWrapper;
 import com.ghostchu.quickshop.api.obj.QUser;
 import com.ghostchu.quickshop.api.shop.cache.ShopInventoryCountCache;
+import com.ghostchu.quickshop.api.shop.check.ShopCheck;
 import com.ghostchu.quickshop.api.shop.state.ShopState;
 import com.ghostchu.quickshop.api.shop.tax.TaxManager;
 import com.ghostchu.quickshop.api.shop.trading.TradeService;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,12 +30,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The manager that managing shops
  */
 @SuppressWarnings("ALL")
 public interface ShopManager {
+
+  LinkedHashMap<Key, ShopCheck> checks();
 
   /**
    * Provides an instance of {@code IShopLayoutProvider} responsible for managing shop layouts.
@@ -182,6 +188,21 @@ public interface ShopManager {
    * @return the ShopState associated with the identifier, or a default ShopState if not found
    */
   @NotNull ShopState shopStateOrDefault(final String identifier);
+
+  /**
+   * Retrieves the cached tax account associated with the current user.
+   *
+   * @return the cached tax account as a {@link QUser} instance, or null if no cached tax account is available.
+   */
+  @Nullable
+  QUser getCacheTaxAccount();
+
+  /**
+   * Retrieves the cached unlimited shop account associated with the current user or context.
+   *
+   * @return An instance of QUser representing the cached unlimited shop account, or null if no such account exists.
+   */
+  QUser getCacheUnlimitedShopAccount();
 
   /**
    * Handle the player buying
@@ -490,6 +511,16 @@ public interface ShopManager {
   void handleChat(@NotNull Player player, @NotNull String msg);
 
   /**
+   * Calculates the number of shops owned by a specific player.
+   *
+   * @param p the player whose shop ownership is to be calculated; must not be null.
+   * @return the number of shops owned by the specified player.
+   *
+   * @since 6.4.0.4
+   */
+  int shopsOwnedByPlayer(@NotNull final QUser p);
+
+  /**
    * Checks if player reached the limit of shops
    *
    * @param p       The player to check
@@ -542,6 +573,17 @@ public interface ShopManager {
    * @return True if the shop was register successfully.
    */
   CompletableFuture<?> registerShop(@NotNull Shop shop, boolean persist);
+
+  /**
+   * Relocates the specified shop to a new location.
+   *
+   * @param shop the shop to be relocated; must not be null.
+   * @param newLocation the new location to where the shop should be moved; must not be null.
+   * @return a CompletableFuture that completes when the relocation process finishes.
+   *
+   * @since 6.4.0.4
+   */
+  CompletableFuture<Void> relocateShop(@NotNull Shop shop, @NotNull Location newLocation);
 
   /**
    * Unregister a shop from database.

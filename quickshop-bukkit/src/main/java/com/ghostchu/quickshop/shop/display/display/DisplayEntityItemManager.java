@@ -41,10 +41,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class DisplayEntityItemManager implements DisplayManager<DisplayEntityDisplayItem> {
 
-  public static final String DISPLAY_ITEM_KEY = "qs-display-interaction";
-
-  public static final NamespacedKey DISPLAY_ITEM_KEY_INSTANCE = new NamespacedKey(QuickShop.getInstance().getJavaPlugin(), DISPLAY_ITEM_KEY);
-
   private final ConcurrentHashMap<ShopChunk, ConcurrentHashMap<Integer, DisplayEntityDisplayItem>> chunksMapping = new ConcurrentHashMap<>();
 
   private static DisplayEntityItemManager instance;

@@ -3,3 +3,6 @@ silk-touch: true
 
 # Should we force the owner to be the player that places it?
 force-owner: true
+
+# Should only shulker boxes be portable?
+shulker-only: false

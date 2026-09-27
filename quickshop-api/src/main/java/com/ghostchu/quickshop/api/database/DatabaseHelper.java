@@ -67,6 +67,17 @@ public interface DatabaseHelper {
   CompletableFuture<Void> createShopMap(long shopId, @NotNull Location location);
 
   /**
+   * Updates the shop mapping in the database, associating a shop with a given location.
+   *
+   * @param shopId   The unique identifier of the shop whose mapping needs to be updated.
+   * @param location The new location to map the shop to. Must not be null.
+   * @return A CompletableFuture representing the completion of the asynchronous operation.
+   *
+   * @since 6.4.0.4
+   */
+  CompletableFuture<Void> updateShopMap(long shopId, @NotNull Location location);
+
+  /**
    * Query and getting the data record by data Id
    *
    * @param dataId The data Id
