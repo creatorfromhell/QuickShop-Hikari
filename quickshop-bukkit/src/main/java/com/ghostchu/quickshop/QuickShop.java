@@ -1418,7 +1418,12 @@ public class QuickShop implements QuickShopAPI, Reloadable {
 
   public AbstractItemStack<?> stack(final GuiConfig.IconConfig config) {
 
-    PaperItemStack stack = new PaperItemStack().of(config.getMaterial(), config.getAmount());
+    return stack(config, config.getAmount());
+  }
+
+  public AbstractItemStack<?> stack(final GuiConfig.IconConfig config, final int amount) {
+
+    PaperItemStack stack = new PaperItemStack().of(config.getMaterial(), amount);
 
     final String provider = config.getProvider();
     if (!provider.equalsIgnoreCase("vanilla")) {
@@ -1431,9 +1436,14 @@ public class QuickShop implements QuickShopAPI, Reloadable {
 
   public AbstractItemStack<?> stackSwitch(final GuiConfig.IconConfig config, final boolean condition, final String trueMaterial, final String falseMaterial) {
 
+    return stackSwitch(config, config.getAmount(), condition, trueMaterial, falseMaterial);
+  }
+
+  public AbstractItemStack<?> stackSwitch(final GuiConfig.IconConfig config, final int amount, final boolean condition, final String trueMaterial, final String falseMaterial) {
+
     final String material = (condition)? trueMaterial : falseMaterial;
 
-    PaperItemStack stack = new PaperItemStack().of(material, config.getAmount());
+    PaperItemStack stack = new PaperItemStack().of(material, amount);
 
     final String provider = config.getProvider();
     if (!provider.equalsIgnoreCase("vanilla")) {
