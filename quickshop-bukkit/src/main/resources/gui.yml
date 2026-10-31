@@ -5,6 +5,7 @@
 #   material: The material type (e.g., PAPER, BARRIER, LIME_CONCRETE)
 #   name: Display name (supports MiniMessage format)
 #   lore: List of lore lines (supports MiniMessage format)
+#   provider: The provider of the icon (e.g., vanilla, nexo, itemsadder, oraxen, slimefun, nova)
 #   custom-model-data: Custom model data for resource packs (integer, optional)
 #   slot: The slot position in the inventory (0-53)
 #   amount: Item amount (default: 1)
@@ -56,6 +57,7 @@ trade:
     name: "lang:gui.trade.info-stock.display"
     lore:
       - "lang:gui.trade.info-stock.lore"
+    provider: "vanilla"
     custom-model-data: 0
     slot: 21
   

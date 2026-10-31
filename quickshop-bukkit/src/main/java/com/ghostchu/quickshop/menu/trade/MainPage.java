@@ -203,9 +203,9 @@ public class MainPage extends QuickShopPage {
                                        .withSlot(customAmountSlot).build());
 
         // Quantity buttons from config - color-coded (LIME_CONCRETE for buy, ORANGE_CONCRETE for sell)
-        final String quantityMaterialBuy = quantityConfig != null && quantityConfig.section() != null
+        final String quantityMaterialBuy = (quantityConfig != null && quantityConfig.section() != null)
                                            ? quantityConfig.section().getString("material-buy", "LIME_CONCRETE") : "LIME_CONCRETE";
-        final String quantityMaterialSell = quantityConfig != null && quantityConfig.section() != null
+        final String quantityMaterialSell = (quantityConfig != null && quantityConfig.section() != null)
                                             ? quantityConfig.section().getString("material-sell", "ORANGE_CONCRETE") : "ORANGE_CONCRETE";
         final String quantityMaterial = shop.get().isSelling()? quantityMaterialBuy : quantityMaterialSell;
 
